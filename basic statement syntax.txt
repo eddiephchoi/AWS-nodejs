@@ -1,0 +1,123 @@
+// start mongodb  type   
+mongod
+
+// start mongo shell
+mongo
+
+// show current path
+pwd()
+
+// create new path
+mkdir("Working")
+
+// change path
+cd("Working")
+
+// create database / connect to database
+use testdb
+
+// show database
+show dbs
+
+// show current db
+db
+
+// show collections
+show collections
+
+--------------------------------------------------------------------
+// create collection
+db.createCollection("test")
+
+// drop collection
+db.test.drop()
+
+--------------------------------------------------------------------
+// add records
+db.test.insert({col1:"aa",col2:"bb",col3:"cc"})
+
+db.test.insert([{col1:"xx",col2:"yy",col3:"zz"},
+                {col1:"pp",col2:"qq",col3:"rr"}]
+                )
+db.test.insert({col1:"hh",col2:"kk",col3:"ll",col:30})
+
+--------------------------------------------------------------------
+// search all records
+db.test.find()
+db.test.find({}).pretty()
+db.test.find({}).sort({"col1":-1})
+
+// search a particular record 
+db.test.find({col1:"11"})
+db.test.find({col1:{$eq: "aa"}})
+db.test.find({col:{$gt:15}})
+db.test.find({col3:"oo",col:{$gt:15}})
+db.test.find({$or:  [   {col3:"oo"},{col:{$gt:15}}  ]
+             })
+
+// search record in which a particular column is null
+db.test.find({col:null})
+
+// search but show only part of the column information
+db.test.find({col1:{$eq: "aa"}},{col1:1, col3:1, _id:0})
+
+// show searching execution statistics
+db.test.find({col1:{$eq: "aa"}}).explain("executionStats")
+
+// set variable and search by using variable
+var Ten = 10
+db.test.find({col3:"oo",col:{$gt:Ten}})
+
+--------------------------------------------------------------------
+// update records
+db.test.update(	{col1:"pp"},
+				{col1:"11",col2:"22",col3:"33"})				
+db.test.update(	{col1:"pp"},
+				{$Set:
+					{col1:"11",col2:"22",col3:"33"}
+				}
+				)
+db.test.update(	{col1:"hh",
+				{"$inc":{"col":1}
+				}
+				)
+
+--------------------------------------------------------------------
+// remove record
+db.test.remove({"col1":'aa'})
+
+
+--------------------------------------------------------------------
+// create java script function and run in mongodb shell
+
+// selectDB().js
+
+var selectDB = function(port, dbname) {
+	if(!port) {
+		port = 27017;
+	}
+	if(!dbname) {
+		dbname = "Test";
+	}
+	db = connect("localhost:"+port+"/"+dbname);
+	return db;
+}
+
+// load java script
+load("selectDB.js")
+
+// run java script
+selectDB()
+selectDB(27017,"TestDB")
+
+--------------------------------------------------------------------
+// build index on collection
+db.getCollection("test").createIndex({ "col1": 1 })
+db.test.createIndex({ "col1": 1 })
+db.test.createIndex({ "col1": 1 },{"unique": true})
+
+// show indexes
+db.test.getIndexes()
+
+// drop index
+db.test.dropIndex("col_1")

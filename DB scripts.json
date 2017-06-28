@@ -1,0 +1,279 @@
+//Base collection stores the static information for the Alpha HRMS mobile application use 
+//
+//Dummy record
+    use AlphaHRMS
+    db.Base.insert(
+    {"Base_ID":"XXXXXXXX",   // system generated unique ID 
+	"Company_Name":"Asia Pacific Soft Co. Ltd",   
+    "Company_Addr":["Rm 707, Austin Tower,", "22-26 Austin Tower, Tsim Sha Tsui,", "Kowloon, Hong Kong"],
+    "Company_Phone":"(852) 2772 0831",	  
+    "Fax":"(852) 2772 0631",
+	"email":"info@apsoft.com.hk",
+	"TC":"XXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXXX"    	// Terms and conditions
+    }
+    );
+	
+************************************************************************
+	
+//Company refers to those companies that subscribe the Alpha HRMS mobile service. 
+//"Company" is also a system document for filter control purpose. All data access will always be filtered by Company.
+//Dummy record
+    use AlphaHRMS
+    db.Company.insert(
+    {"Company_ID":"XXXXXXXX",   // system generated unique ID for the company
+	"Org_Comp_ID":"XXXXXXXX",   // original company ID in web application database
+    "Company_Abbr":"XXXXXXXX",  // company defined company name abbreviation
+    "Company_Logo":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",	  // the file name of company logo
+    "Company_Name":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",    // full name of the company
+					"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+					"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"}
+    }
+    );
+
+************************************************************************
+
+//Create collection "News"
+//News refers to different types of information provided by the company for employee reference
+
+use AlphaHRMS
+db.createCollection( "News",
+   { validator: { $or:
+      [
+		{ Type: { $in: [ "Mission", "News", "Pension", "Privilege", "Advertisement" ] } },
+      ]
+   }
+} )
+
+//Insert data into collection "News"
+//News refers to a number of company information to be displayed on mobile screens
+//News publishing right is controlled by web server side. Mobile apps only display the news published
+//The following are the types of news
+//    Mission: Mission
+//    News: Company news
+//    Pension: Pension / Health
+//    Privilege: My privilege
+//    Advertisement: Advertisement	
+//Dummy record
+    use AlphaHRMS
+    var ExpDate = new Date("1990-12-31T23:59:59")	
+    db.News.insert(
+    {"Company_ID":"XXXXXXXX",  	//the MongoDB company ID
+	"Type":"News",      		//can only be one these options: "Mission", "News", "Pension", "Privilege", "Advertisement"
+	"News_Date":new Date(),  	//Posting date specified by application, default to system date
+	"News_Title":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",    // Title of the News
+				"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+				"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"},
+	"News_Content":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",  // The unique file name of the news in blob container (S3) (NEWSnnnnnnnnn)
+				"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+				"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"},	
+	"Doc_Attach":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",   	// The attached document file name generated (NEWSnnnnnnnnnD)
+				"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+				"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"},	
+	"Expiry":ExpDate,   		//News expiry date specified by application. If news shall be retained, set a long expiry date here
+	"Posted_By":"XXXXXXXX"	  	//the MongoDB employee ID 
+    }
+    );
+
+************************************************************************	
+	
+//Create collection "Employee"
+//Employee refers to the mobile app user who is the employee of one or more than one company
+
+use AlphaHRMS
+db.createCollection( "Employee",
+   { validator: { $or:
+      [
+		{ Gender: { $in: [ "M", "F" ] } },
+		{ Date_of_Birth: { $type: "date" } },
+        { Marital_Status: { $in: [ "M", "S", "D" ] } }		// M/S/D (Married, Single, Divorced)
+      ]
+   }
+} )
+
+//Insert data into collection "Employee"	
+//Employee refers to the staff who work under a company. 
+//Only those information that may be changed is stored in here, seldom changed info like ID no, nationality will not be stored 
+//When user update information in mobile app, the info will be syn back to the host server database
+//Dummy record
+use AlphaHRMS
+    var DOB = new Date("1990-12-31T23:59:59")
+    db.Employee.insert(
+    {
+    "Employee_ID":"XXXXXXXX",   	// refer to MongoDB employee ID
+    "Org_Employee_ID":"XXXXXXXX",   // refer to the staff ID in web application database
+	"Company_ID":"XXXXXXXX",   		// the company ID of which the employee work for in mobile Apps database. An employee can work for more than one company at the same time	
+    "Department":"XXXXXXXXXXXX",  	// Department name of the employee
+	"Position":"XXXXXXXXX",   		// position of the employee in company
+	"Role":"Approver",       		// Two types: User - no leave approval right, Approver - has leave approval right
+	"Leave_Approver":"XXXXXXXX",  	// The ID of the upper level employee (approver) who will approve this employee's leave application
+    "Name":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",    // full name of the employee in different language
+			"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+			"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"},
+	"Gender":"X", 					// M or F
+	"Marital_Status":"X",        	// M/S/D (Married, Single, Divorced)
+	"Date_of_Birth":DOB, 			// For calculating age when needed
+	"Phone":[{"Area_Code":852, "Number":999999999, "Ext":9999,"Type":"Mobile"},	// Mobile phone is mandatory because it is used for login, and 
+			{"Area_Code":852, "Number":999999999, "Ext":9999,"Type":"Home"},	// mobile phone is also used for finding the corresponding user when employee using phone no. to log in
+			{"Area_Code":852, "Number":999999999, "Ext":9999,"Type":"Office"}],
+	"Extension":99999,				// phone extension
+	"email":["XXXXXXXXX0XXXXXXXXX00XXXXXXXXX00XXXXXXXXX0",
+			"XXXXXXXXX0XXXXXXXXX00XXXXXXXXX00XXXXXXXXX0"],
+	"Flat":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+	"Street":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+	"Suburb":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+	"City":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+	"Country":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",	
+	"Region":"XXXXXXXXX0XXXXXXXXX0",
+	"Icon_Pic":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",	// File name of the member icon picture abc.jpg (use GridFS approach)
+	"Reg_Date":new Date(),    						// mobile app user registration date set when user first login mobile app
+	"Annual_Leave":{"Entitled":0,"Taken":0},		// Annual leave details, balance is calculated by subtracting Taken from Entitled
+	"Sick_Leave":{"Entitled":0,"Taken":0},			// Sick leave details, balance is calculated by subtracting Taken from Entitled
+	"Password":"XXXXXXXX",
+	"Notification":true,			// True - allow notification, False - disable notification
+	"Language":"T"					// E - English, T - Traditional Chinese, P - PRC Chinese
+    }
+    );
+
+
+************************************************************************	
+	
+//Create collection "Leave"
+//Leave store all the leave applications submitted by the employee, as well as the approval status
+//There are several types of leaves as that mentioned above
+//The leave application created in here will also be shown in the corresponding leave approver's leave application page for review and response
+
+use AlphaHRMS
+db.createCollection( "Leave",
+   { validator: { $or:
+      [
+		{ Type: { $in: [ "Annual", "Sick", "No Pay", "Compensate", "Maternity" ] } },
+		{ Status: { $in: [ "Pend", "Approved", "Rejected" ] } },
+		]
+   }
+} )
+
+//Insert data into collection "Leave"
+//                                      << need to discuss synchronization between mobile application and web application >>
+//Dummy record
+    use AlphaHRMS
+    var FromDate = new Date("2016-1-1T23:59:59")	    // From date of the leave application
+	var ToDate = new Date("2016-1-31T23:59:59")			// To date of the leave application 
+    db.Leave.insert(
+    {"Company_ID":"XXXXXXXX",		// Refer to MongoDB company ID
+	"Employee_ID":"XXXXXXXXXXX",   	// refer to MongoDB employee ID 
+    "Org_Employee_ID":"XXXXXXXX",   // refer to the staff ID in web application database	
+    "Name":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",    // full name of the employee in different language for approver reference
+			"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+			"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"},
+	"Department":"XXXXXXXXXXXX",  	// Department name of the employee, for approver reference
+	"App_Date":new Date(),			// The date of which the leave application is created / submitted
+	"Type":"Annual",      			// The type of leave applied. Must be one of the leave type declared above
+	"From_Date":FromDate,  			// The starting date time of the leave
+	"To_Date":ToDate,  				// The ending date time of the leave	
+	"App_Remark":"XXXXXXXXX0XXXXXXXXX00XXXXXXXXX00XXXXXXXXX0",   	// Application remarks 
+	"Doc_Attach":["XXXXXXXX0XXXXXXXX","XXXXXXXX0XXXXXXXX","XXXXXXXX0XXXXXXXX"],   // The attached document file name stored in S3
+	"Status":"Pend",				// The status code of application must be one of the status declared above
+	"Resp_Date":new Date(),			// The date of which the leave application is responded
+	"Resp_Remark":"XXXXXXXXX0XXXXXXXXX00XXXXXXXXX00XXXXXXXXX0",   	// Response remarks 
+    "Alert":true					// When the application is submitted or responded, set the alert to true. If read, set to false
+	}
+    );
+	
+************************************************************************
+
+//Create collection PayDoc
+//PayDoc stores mainly the pdf file name of pay slip and tax form IR56B
+use AlphaHRMS
+db.createCollection( "PayDoc",
+   { validator: { $or:
+      [
+		{ Type: { $in: [ "Pay Slip", "IR56B"] } }
+		]
+   }
+} )	
+//Insert data into collection "PayDoc"
+//Payroll stores the employee payslips and IR56B pdf files
+//
+//Dummy record
+    use AlphaHRMS
+    var PostDate = new Date("1990-12-31T23:59:59")	
+    db.PayDoc.insert(
+    {"Company_ID":"XXXXXXXX",			// refer to MongoDB company_ID
+	"Employee_ID":"XXXXXXXXXXX",    	// refer to MongoDB employee_ID
+    "Org_Employee_ID":"XXXXXXXX",   	// refer to the staff ID in web application database	
+	"PayDoc_Date":new Date(),
+	"Type":"Pay Slip",
+	"Title":"XXXXXXXXXXXXXXXXXXXX",    //e.g. Pay slip 2016 Dec 31, IR56B 2016 Apr
+	"PayDoc_File":"XXXXXXXXX0XXXXXXXXX00XXXXXXXXX00XXXXXXXXX0",  //file name of the document in Blob container
+	"Post_Date":PostDate,
+	"Alert":true,				// when payslip is generated, set the alert to true, once downloaded, set to false
+	"Downloaded":false			// when payslip is downloaded, set the alert to true
+    }
+    );
+
+************************************************************************
+	
+//PhoneBook store the company major contact phone and email details for employee to browse
+//Each company maintain one and only one phone book which has multiple number of contact information
+//Dummy record
+    use AlphaHRMS
+    db.PhoneBook.insert(
+    {"Company_ID":"XXXXXXXX",   	// system generated unique ID for the PhoneBook
+    "Department":"XXXXXXXXXXXX",  	// Department name of the contact
+	"Position":"XXXXXXXXX",   		// position of the contact in company
+    "Employee_ID":"XXXXXXXX",   	// refer to MongoDB employee ID, if exists	
+	"Org_Employee_ID":"XXXXXXXX",   	// refer to the staff ID in web application database	
+    "Name":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",    // full name of the employee in different language
+			"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+			"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"},
+	"Phone":[{"Area_Code":852, "Number":999999999, "Ext":9999,"Type":"Mobile"},
+			{"Area_Code":852, "Number":999999999, "Ext":9999,"Type":"Office"}],   	//Home phone shall not be shown in phone book
+	"Extension":99999,				// phone extension
+	"email":["XXXXXXXXX0XXXXXXXXX00XXXXXXXXX00XXXXXXXXX0",
+			"XXXXXXXXX0XXXXXXXXX00XXXXXXXXX00XXXXXXXXX0"],
+	"Icon_Pic":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"	// File name of the member icon picture abc.jpg (use GridFS approach)
+    }
+    );
+	
+************************************************************************
+	
+//Document store the company useful documents for employee reference
+//Here document refers to the forms only
+
+//Dummy record
+    use AlphaHRMS
+    var ExpDate = new Date("2020-12-31T23:59:59")
+    db.Document.insert(
+    {"Company_ID":"XXXXXXXX",   		// system generated unique ID for the PhoneBook
+	"Type":"Form",
+    "Title":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",    // Title of the document
+			"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+			"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"},
+	"Doc_File":{"ENG":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",  // Unique file name of the document in the blob container
+			"CHN":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0",
+			"PRC":"XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0XXXXXXXXX0"},
+	"Expiry":ExpDate					// Expiry date of the document
+    }
+    );	
+	
+************************************************************************
+
+//MongoDB Shell Script: Read actions find{}
+// show all document
+db.activitylogs.find({})
+
+// show document with conditions
+db.activitylogs.find({subscriberID:{$eq:"S001"}})
+db.activitylogs.find({subscriberID:"S001"},{activityCode:"1001"})
+db.activitylogs.find( { $or: [ { subscriberID: "S001" }, { activityCode: { $gt: "1001" } } ] } )
+db.activitylogs.find( {
+     subscriberID: "S001",
+     $or: [ { activityCode: { $gt: "1001" } }, { attachmentsize: 0 } ]
+} )
+
+
+// show document with selected column data
+db.activitylogs.find({subscriberID:{$eq:"S001"}})
+db.activitylogs.find( { activityCode: "1001" }, { activityCode: 1, userID: 1, _id: 0 } )
+	
+	
